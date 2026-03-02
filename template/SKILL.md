@@ -30,3 +30,10 @@ Bad:
 
 - Guideline 1
 - Guideline 2
+
+## Dependencies
+
+List any prerequisites or dependencies this skill requires:
+- Project files or configurations needed
+- Environment requirements
+- Other skills that should be installed

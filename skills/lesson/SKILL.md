@@ -21,27 +21,63 @@ Record hard-won lessons as iron rules in the project's `MEMORY.md`.
 Auto-detect MUST ask user confirmation before writing. Present:
 ```
 🔔 检测到潜在铁律:
-**{rule}** — {reason}
+ **{rule}** — {reason}
 
 写入 MEMORY.md？
 ```
 
 ## Process
 
-1. **Identify** the lesson from conversation context or user input
-2. **Read** project root `MEMORY.md`
-3. **Quality check** — the rule must be:
+1. **Check** if project root `MEMORY.md` exists
+2. **If not exists**: Create it with template (see below)
+3. **Identify** the lesson from conversation context or user input
+4. **Read** project root `MEMORY.md`
+5. **Quality check** — the rule must be:
    - Actionable (clear do/don't)
    - Specific (not generic advice)
    - Concise (rule + reason ≤ ~80 chars)
    - Useful (would prevent a real future mistake)
-4. **Dedup** — compare against existing rules:
+6. **Dedup** — compare against existing rules:
    - Semantic duplicate → skip, tell user "已存在类似铁律: {existing}"
    - Partial overlap → merge into more precise version
    - New → append
-5. **Categorize** — place under existing `## Section` in MEMORY.md; create new section only if none fits
-6. **Write** via Edit tool (append to correct section)
-7. **Confirm** — show user what was written
+7. **Categorize** — place under existing `## Section` in MEMORY.md; create new section only if none fits
+8. **Write** via Edit tool (append to correct section)
+9. **Confirm** — show user what was written
+
+## MEMORY.md Template
+
+If MEMORY.md doesn't exist, create it with this template:
+
+```markdown
+# MEMORY.md — 项目铁律
+
+本文件记录了项目开发过程中总结的重要经验和规则。
+
+请使用 `/lesson`、`记录经验` 或 `铁律` 命令添加新规则。
+
+---
+
+## 开发规范
+
+- (铁律将记录于此)
+
+## 调试经验
+
+- (调试经验将记录于此)
+
+## 工具配置
+
+- (工具配置经验将记录于此)
+
+## 代码风格
+
+- (代码风格相关规则将记录于此)
+
+---
+
+> 本文件由 lesson skill 自动管理
+```
 
 ## Iron Rule Format
 
