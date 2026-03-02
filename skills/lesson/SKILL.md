@@ -1,104 +1,51 @@
 ---
 name: lesson
-description: "Use when user says 'lesson', '/lesson', '记录经验', '铁律', '记住这个', or when the agent encounters a significant pitfall, unexpected behavior, hard-won insight, or project-specific pattern during work that would prevent future mistakes. MUST trigger proactively when: debugging took 2+ attempts, a wrong assumption was corrected, a non-obvious project convention was discovered, or counter-intuitive framework/tool behavior was encountered. Always write to the project's MEMORY.md."
+description: "Use when user mentions '/lesson', '记录经验', '铁律', or wants to capture lessons learned. Automatically extracts insights from conversation and writes them to project's MEMORY.md. Also triggers when agent makes mistakes or discovers important patterns."
 ---
 
-# Lesson — Iron Rule Capture
+# Lesson Skill — 铁律捕获
 
-Record hard-won lessons as iron rules in the project's `MEMORY.md`.
+## Overview
 
-## Trigger
+自动从对话中提取踩坑经验和关键教训，写入项目的 `MEMORY.md`。
 
-**Manual**: User says `lesson`, `/lesson`, `记录经验`, `铁律`, `记住这个`.
+## Prerequisites
 
-**Auto-detect**: Proactively suggest recording when ANY of these occur during work:
-- Debugging took 2+ attempts
-- A wrong assumption was corrected
-- Non-obvious project convention discovered
-- Counter-intuitive framework/tool behavior encountered
-- A repeated pattern worth codifying
+- 项目根目录需要有 `MEMORY.md` 文件
+- 如果没有，运行安装脚本自动创建
 
-Auto-detect MUST ask user confirmation before writing. Present:
-```
-🔔 检测到潜在铁律:
- **{rule}** — {reason}
+## Installation
 
-写入 MEMORY.md？
+```bash
+# 自动安装（如果项目没有 MEMORY.md）
+curl -sL https://raw.githubusercontent.com/Ai-feier/skills/main/docs/INSTALL.sh | bash
 ```
 
-## Process
+## Usage
 
-1. **Check** if project root `MEMORY.md` exists
-2. **If not exists**: Create it with template (see below)
-3. **Identify** the lesson from conversation context or user input
-4. **Read** project root `MEMORY.md`
-5. **Quality check** — the rule must be:
-   - Actionable (clear do/don't)
-   - Specific (not generic advice)
-   - Concise (rule + reason ≤ ~80 chars)
-   - Useful (would prevent a real future mistake)
-6. **Dedup** — compare against existing rules:
-   - Semantic duplicate → skip, tell user "已存在类似铁律: {existing}"
-   - Partial overlap → merge into more precise version
-   - New → append
-7. **Categorize** — place under existing `## Section` in MEMORY.md; create new section only if none fits
-8. **Write** via Edit tool (append to correct section)
-9. **Confirm** — show user what was written
+### 触发方式
 
-## MEMORY.md Template
+1. 显式命令：`/lesson`、`记录经验`、`铁律`
+2. Agent 自动检测到重要经验时
 
-If MEMORY.md doesn't exist, create it with this template:
+### 写入内容
 
+- 开发规范
+- 调试经验
+- 工具配置
+- 代码风格
+- 任何值得记录的经验
+
+## 示例
+
+```
+You: 这个项目的 API 总是返回 401，可能是我 token 过期了
+Agent: 记录下来，写入 MEMORY.md
+```
+
+会写入：
 ```markdown
-# MEMORY.md — 项目铁律
-
-本文件记录了项目开发过程中总结的重要经验和规则。
-
-请使用 `/lesson`、`记录经验` 或 `铁律` 命令添加新规则。
-
----
-
-## 开发规范
-
-- (铁律将记录于此)
-
 ## 调试经验
 
-- (调试经验将记录于此)
-
-## 工具配置
-
-- (工具配置经验将记录于此)
-
-## 代码风格
-
-- (代码风格相关规则将记录于此)
-
----
-
-> 本文件由 lesson skill 自动管理
+- 401 错误通常是 token 过期，检查 Auth 头部
 ```
-
-## Iron Rule Format
-
-```markdown
-- **{Actionable rule}** — {Reason, max 15 chars}
-```
-
-One bullet per rule. Bold = the instruction. Dash-suffix = minimal why.
-
-## Examples
-
-Good:
-- **gitaly image tag 必须与 Chart.appVersion 一致** — 否则 CrashLoopBackOff
-- **禁止在 CronJob 中使用 latest tag** — 导致不可复现部署
-
-Bad (too vague):
-- 注意 Helm values 的配置 ← not actionable
-- Kubernetes 很复杂要小心 ← not specific
-
-## Scope
-
-- Writes ONLY to the current project's `MEMORY.md` (project root)
-- Does NOT create learned skills (those are separate, detailed pattern docs)
-- Does NOT modify global config
