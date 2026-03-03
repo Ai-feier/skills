@@ -1,6 +1,11 @@
 ---
 name: your-skill-name
 description: "Describe what this skill does and when Claude/OpenCode should use it. Be specific about trigger phrases and scenarios. Write it 'pushy' — err on the side of triggering too often rather than too little."
+config_requirements:
+  # Add configuration requirements here
+  # - file: ".opencode/opencode.json"
+  #   required_fields:
+  #     instructions: ["MEMORY.md"]
 ---
 
 # Skill Name
