@@ -1,0 +1,44 @@
+{
+  "skill_name": "minimal-sop-agent-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我创建一个 agent，专门用来检查 TypeScript 项目中的 console.log 语句，列出所有出现的位置。不需要修改代码，只需要报告。",
+      "expected_output": "生成一个纯 markdown 格式的 agent prompt 文件，包含：角色（只读检查器）、任务描述、工作流程（3-5步）、工具限制（只用 Grep + Read）、禁止行为（不能写文件、不能执行命令）。总行数不超过 200 行。",
+      "files": [],
+      "expectations": [
+        "输出是纯 markdown 格式（无 YAML frontmatter）",
+        "工具数量不超过 5 个",
+        "包含明确的工作流程步骤",
+        "有具体的禁止行为列表",
+        "每步 SOP 都是可执行的具体动作"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "我需要一个给小模型用的 agent，功能是从 Python 项目的 git diff 生成 CHANGELOG 条目。只能用 git 命令获取变更信息，输出 markdown 格式的更新日志。",
+      "expected_output": "生成一个纯 markdown 格式的 agent prompt 文件，角色是 CHANGELOG 生成器，工具只有 Bash（限 git 命令），输出格式明确为 markdown 列表，有禁止行为（不能 commit/push）。",
+      "files": [],
+      "expectations": [
+        "输出是纯 markdown 格式",
+        "Bash 工具有明确的命令限制（只能 git diff/log）",
+        "输出格式有具体模板",
+        "禁止行为包含不能执行 git commit/push",
+        "SOP 步骤不超过 8 步"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "写一个极简 agent，只需要做一件事：读取用户指定的 JSON 配置文件，验证所有必填字段是否存在，输出验证结果。不要修改文件。",
+      "expected_output": "生成一个纯 markdown 格式的 agent prompt 文件，角色是 JSON 配置验证器，工具只有 Read，SOP 步骤精简（读取→解析→验证→报告），有明确的输出格式。",
+      "files": [],
+      "expectations": [
+        "工具只有 Read（或 Read + Glob）",
+        "SOP 步骤不超过 5 步",
+        "输出格式有具体示例",
+        "有禁止行为（不能写、不能改）",
+        "总行数不超过 150 行"
+      ]
+    }
+  ]
+}
