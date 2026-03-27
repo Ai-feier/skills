@@ -22,10 +22,9 @@ description: "Use when creating a minimal agent prompt for small models, when us
 | 维度 | 限制 |
 |------|------|
 | 工具数量 | 最多 5 个，推荐 3 个 |
-| 技能数量 | 最多 2 个，推荐 0-1 个 |
-| Prompt 长度 | 最多 200 行（含模板） |
+| Prompt 长度 | 最多 200 行（含 frontmatter） |
 | SOP 步骤 | 最多 8 步 |
-| 输出格式 | 纯 Markdown，无 YAML frontmatter |
+| 输出格式 | OpenCode Agent Markdown（YAML frontmatter + Markdown body） |
 
 **为什么这么严格？** 小模型在面对多个工具选择时容易：
 - 选择错误的工具
@@ -42,40 +41,23 @@ description: "Use when creating a minimal agent prompt for small models, when us
 ```
 1. 这个 agent 的核心任务是什么？（一句话描述）
 2. 这个 agent 需要用到哪些工具？（从以下列表选择，最多 5 个）
-3. 这个 agent 是否可以使用技能？
-   - 不可以 → agent 完全不能访问任何技能
-   - 可以 → 请列出允许使用的技能（白名单，最多 2 个）
-4. agent 的输出应该是什么格式？
-5. 有没有需要特别禁止的行为？
+3. 这个 agent 的模式是什么？
+   - primary（主 Agent，用户直接交互）
+   - subagent（子 Agent，被其他 Agent 调用或 @mention 调用）
+4. 用什么模型？（如 Internal/internal-mimo-v2-flash）
+5. agent 的输出应该是什么格式？
+6. 有没有需要特别禁止的行为？
 ```
-
-**关于技能可见性（必须询问）：**
-
-小模型的技能访问必须是**二选一**：
-
-| 选项 | 含义 | 写法 |
-|------|------|------|
-| **无技能** | agent 不能使用任何技能 | `## 可用技能\n\n**无。此 agent 不得使用任何技能。**` |
-| **白名单** | agent 只能使用指定的技能 | 列出允许的技能 + 使用规则 + 禁止未授权访问 |
-
-**绝对禁止：** 不要给 agent 开放式技能访问（"你可以使用所有可用技能"）。小模型会尝试使用不相关的技能，导致不可预测的行为。
-
-如果用户选择白名单模式，追问：
-- 具体允许哪些技能？（从已安装的技能中选择）
-- 每个技能在什么情况下使用？
 
 **可用工具列表**（让用户从中选择）：
 
-| 工具 | 用途 |
-|------|------|
-| Read | 读取文件 |
-| Write | 创建/覆盖文件 |
-| Edit | 编辑文件 |
-| Grep | 搜索文件内容 |
-| Glob | 查找文件 |
-| Bash | 执行命令 |
-| WebFetch | 获取网页内容 |
-| WebSearch | 网络搜索 |
+| 工具 | 配置名 | 用途 |
+|------|--------|------|
+| 读取文件 | read | 读取文件内容 |
+| 创建/覆盖文件 | write | 创建新文件或覆盖已有文件 |
+| 编辑文件 | edit | 编辑已有文件 |
+| 执行命令 | bash | 执行 shell 命令 |
+| 获取网页 | webfetch | 获取网页内容 |
 
 **注意事项：**
 - 如果用户不确定选什么工具，根据任务类型推荐最精简的组合
@@ -83,13 +65,27 @@ description: "Use when creating a minimal agent prompt for small models, when us
 - 对于"生成"任务（如写代码），给 Read + Write + Edit
 - Bash 只在确实需要执行命令时才加入
 
-### 第二步：生成 Agent Prompt
+### 第二步：生成 Agent 文件
 
-根据访谈结果，生成一个 **纯 Markdown 格式的 agent prompt 文件**。
+根据访谈结果，生成一个 **OpenCode Agent Markdown 格式** 的文件，保存到 `.opencode/agents/` 目录。
+
+**文件名规则：** 文件名即 agent 名称，如 `git-commit.md` → agent 名为 `git-commit`
 
 **文件结构模板：**
 
 ```markdown
+---
+description: "[一句话描述这个 agent 做什么、什么时候用]"
+mode: subagent
+model: [provider/model-id]
+tools:
+  read: true
+  write: true/false
+  edit: true/false
+  bash: true/false
+  webfetch: true/false
+---
+
 # [Agent 名称]
 
 ## 角色
@@ -107,27 +103,6 @@ description: "Use when creating a minimal agent prompt for small models, when us
 3. [第三步]
 ...
 
-## 可用工具
-
-- [工具1]: [用途限制说明]
-- [工具2]: [用途限制说明]
-
-## 可用技能（白名单）
-
-你可以且仅可以使用以下技能。**不在列表中的技能一律禁止使用。**
-
-- [skill-name-1]: [什么时候用、怎么用]
-- [skill-name-2]: [什么时候用、怎么用]
-
-### 技能使用规则
-
-1. 只有上面列出的技能可以使用
-2. 使用前先读取对应技能的 SKILL.md，按技能指示操作
-3. 如果任务需要的技能不在列表中，**不要尝试使用**，而是：
-   - 用已有工具手动完成
-   - 或者报告"需要 [skill-name] 技能但未授权，无法完成此步骤"
-4. 不要尝试加载、发现或访问未列出的技能
-
 ## 输出要求
 
 [输出格式和质量要求]
@@ -136,27 +111,44 @@ description: "Use when creating a minimal agent prompt for small models, when us
 
 - [禁止项1]
 - [禁止项2]
-- 不要使用未授权的技能
-- 不要尝试通过其他方式访问未列出的技能内容
 ```
+
+**YAML frontmatter 必填字段：**
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `description` | 触发描述，决定何时自动调用 | `"Use when user says 'commit'..."` |
+| `mode` | `subagent`（子 Agent）或 `primary`（主 Agent） | `subagent` |
+| `model` | 使用的模型（可选，默认用主 Agent 的模型） | `Internal/internal-mimo-v2-flash` |
+| `tools` | 工具开关（可选，false = 禁用该工具） | `write: false` |
+
+**可选字段：**
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `temperature` | 温度参数，0-1 | `0.1` |
+| `steps` | 最大迭代步数 | `10` |
+| `hidden` | 隐藏 agent（不显示在 @ 菜单） | `true` |
+| `permission` | 工具权限控制 | 见下方 |
 
 ### 第三步：呈现并迭代
 
-将生成的 prompt 展示给用户，同时附上质量自检结果：
+将生成的 agent 文件展示给用户，同时附上质量自检结果：
 
 ```
 | 检查项 | 结果 |
 |--------|------|
 | 工具数量 ≤ 5 | ✅/❌ N 个 |
-| 技能数量 ≤ 2 | ✅/❌ N 个 |
 | SOP 步骤 ≤ 8 | ✅/❌ N 步 |
 | 每步可执行 | ✅/❌ |
-| 工具有用途限制 | ✅/❌ |
+| 工具权限明确 | ✅/❌ |
 | 禁止行为具体 | ✅/❌ |
 | 输出格式明确 | ✅/❌ |
+| description 可触发 | ✅/❌ |
 | 总行数 ≤ 200 | ✅/❌ N 行 |
 | 约束可执行 | ✅/❌ |
-| 技能访问明确 | ✅/❌ 无技能/白名单 |```
+| mode 已指定 | ✅/❌ |
+| model 已指定 | ✅/❌ |```
 
 询问用户是否需要调整：
 
@@ -165,9 +157,7 @@ description: "Use when creating a minimal agent prompt for small models, when us
 - 步骤不清晰？重写为更具体的指令
 - 缺少约束？添加禁止行为
 
-用户确认后，将文件保存到用户指定的位置。
-
-**模板参考：** 完整的带技能白名单模板见 `references/agent-with-skills-template.md`。
+用户确认后，将文件保存到 `.opencode/agents/[agent-name].md`。
 
 ## 生成原则
 
@@ -230,9 +220,21 @@ description: "Use when creating a minimal agent prompt for small models, when us
 
 **用户需求：** 检查 Python 代码是否符合 PEP 8，只读不改
 
-**生成结果：**
+**生成结果：** 保存到 `.opencode/agents/pep8-checker.md`
 
 ```markdown
+---
+description: "Use when checking Python code style, PEP 8 compliance, or when user asks to review Python formatting"
+mode: subagent
+model: Internal/internal-mimo-v2-flash
+tools:
+  read: true
+  write: false
+  edit: false
+  bash: false
+  webfetch: false
+---
+
 # PEP 8 代码检查器
 
 ## 角色
@@ -253,15 +255,6 @@ description: "Use when creating a minimal agent prompt for small models, when us
    - 导入是否按标准库、第三方库、本地模块分组
    - 是否使用了 tab 缩进（应该用 4 个空格）
 4. 输出检查结果
-
-## 可用工具
-
-- Glob: 只用于查找 .py 文件，路径模式如 "src/**/*.py"
-- Read: 只用于读取 .py 文件内容
-
-## 可用技能
-
-无
 
 ## 输出要求
 
@@ -284,9 +277,27 @@ description: "Use when creating a minimal agent prompt for small models, when us
 
 **用户需求：** 根据 git diff 生成符合 conventional commit 格式的提交信息
 
-**生成结果：**
+**生成结果：** 保存到 `.opencode/agents/commit-msg-gen.md`
 
 ```markdown
+---
+description: "Use when generating git commit messages, analyzing diffs for commit type, or when user asks to create conventional commit messages"
+mode: subagent
+model: Internal/internal-mimo-v2-flash
+tools:
+  read: false
+  write: false
+  edit: false
+  bash: true
+  webfetch: false
+permission:
+  bash:
+    "*": deny
+    "git diff": allow
+    "git diff --staged": allow
+    "git status": allow
+---
+
 # Commit Message 生成器
 
 ## 角色
@@ -309,14 +320,6 @@ description: "Use when creating a minimal agent prompt for small models, when us
    - 配置 → chore
 3. 确定影响范围（模块/文件名）
 4. 生成 commit message
-
-## 可用工具
-
-- Bash: 只能执行 git diff 和 git status 相关命令
-
-## 可用技能
-
-无
 
 ## 输出格式
 
@@ -344,25 +347,28 @@ description: "Use when creating a minimal agent prompt for small models, when us
 生成完成后，自查以下项目：
 
 - [ ] 工具数量 ≤ 5
-- [ ] 技能数量 ≤ 2
 - [ ] SOP 步骤 ≤ 8
 - [ ] 每步都是具体可执行的动作
-- [ ] 工具有明确的用途限制
+- [ ] 工具权限在 frontmatter 中明确配置（true/false）
 - [ ] 有具体的禁止行为列表
 - [ ] 输出格式有明确要求
 - [ ] 总行数 ≤ 200
 - [ ] 没有模糊的指令（如"适当处理"、"根据情况"）
 - [ ] 约束都是可执行的（路径/命令/工具约束，不是类型判断约束）
-- [ ] 技能访问已明确：无技能 或 白名单（二选一，不能开放式访问）
+- [ ] YAML frontmatter 包含 description、mode、model
+- [ ] description 字段能触发 agent 调用
+- [ ] 文件保存为 `.opencode/agents/[name].md`
 
 ## 常见错误
 
 | 错误 | 修正 |
 |------|------|
-| 给了 Bash 但不限制命令 | 明确写"只能执行 X 和 Y 命令" |
+| 给了 bash 但不限制命令 | 在 permission 中配置具体命令白名单 |
 | 给了太多工具 | 问自己：去掉这个工具，agent 还能完成任务吗？能就去掉 |
 | SOP 步骤太多 | 合并相关步骤，删除可选步骤 |
 | 用了"根据情况判断" | 改为 if/else 明确分支 |
 | 禁止行为太模糊 | 写出具体命令/操作名 |
 | 约束不可执行 | "不要读取非 X 文件" → "只读取用户指定路径的文件" |
-| 开放式技能访问 | "你可以使用所有技能" → 白名单：只列出允许的 1-2 个技能 |
+| 保存为 SKILL.md | 必须保存为 `.opencode/agents/xxx.md` |
+| 缺少 YAML frontmatter | 必须包含 description + mode + model |
+| description 太笼统 | 写具体触发词，如 "Use when user says 'commit'" |
