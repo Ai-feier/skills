@@ -300,6 +300,7 @@ CLAUDE.md
 > - **TypeScript**: 见 `references/typescript.md`
 > - **Python**: 见 `references/python.md`
 > - **Java**: 见 `references/java.md`
+> - **Frontend FSD**: 见 `references/frontend-fsd.md`
 
 ### 通用目录结构原则
 
@@ -934,6 +935,7 @@ src/
 - typescript.md      # TypeScript 代码模型
 - python.md          # Python 代码模型
 - java.md            # Java 代码模型
+- frontend-fsd.md    # 前端 FSD 架构代码模型
 
 提示：CLAUDE.md 会被 Claude Code 自动读取，保持精简（~150 行）。
 详细规范在 .claude/rules/local/ 目录下。
