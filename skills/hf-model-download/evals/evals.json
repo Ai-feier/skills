@@ -1,0 +1,23 @@
+{
+  "skill_name": "hf-model-download",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "下载 Qwen/Qwen2.5-7B-Instruct 的 Q4_K_M.gguf 文件到 ./models 目录",
+      "expected_output": "成功下载 GGUF 文件并验证格式",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "帮我看看 microsoft/Phi-3-mini-4k-instruct-gguf 仓库里有哪些 GGUF 文件",
+      "expected_output": "列出仓库中所有可用的 GGUF 文件",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "从 HuggingFace 下载 bartowski/Llama-3.2-1B-Instruct-GGUF 中最小的那个量化文件",
+      "expected_output": "找到最小的量化文件并下载",
+      "files": []
+    }
+  ]
+}
